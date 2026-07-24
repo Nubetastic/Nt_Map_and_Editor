@@ -7,9 +7,9 @@ RedM imap list and standalone imap tool
 Config.EnableEditor = false, to disable the tool.
 
 Imaps have 3 settings.
-D = default = true, the imap is skipped, it is not requested or removed.
-+ = enable = true, RequestImap for this hash.
-- = enable = false, RemoveImap for this hash.
+"D" = default = true, the imap is skipped, it is not requested or removed.
+"+" = enable = true, RequestImap for this hash.
+"-" = enable = false, RemoveImap for this hash.
 
 ## Install
 Replace your existing imap loader with this script.
