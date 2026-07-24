@@ -269,10 +269,10 @@ foreach ($duplicate in $duplicateHashes) {
 
 [System.IO.Directory]::CreateDirectory($sharedDirectory) | Out-Null
 [System.IO.File]::WriteAllText($outputPath, $outputText, $utf8NoBom)
-[System.IO.File]::WriteAllText($reportPath, ([string]::Join("`n", $reportLines) + "`n"), $utf8NoBom)
+# [System.IO.File]::WriteAllText($reportPath, ([string]::Join("`n", $reportLines) + "`n"), $utf8NoBom)
 
 Write-Output "Generated: $outputPath"
-Write-Output "Report:    $reportPath"
+# Write-Output "Report:    $reportPath"
 Write-Output "Records:   $($finalImapByLine.Count) unique from $($imapByLine.Count) loader entries ($defaultCount default, $enabledCount enabled, $disabledCount disabled)"
 Write-Output "Missing:   $($missingRecords.Count) loader occurrences use empty names and 0.0 coordinates"
 Write-Output "Repeated:  $($duplicateHashes.Count) hashes; $($imapByLine.Count - $finalImapByLine.Count) earlier entries removed"
