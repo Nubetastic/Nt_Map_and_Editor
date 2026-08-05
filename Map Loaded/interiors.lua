@@ -600,6 +600,11 @@ Citizen.CreateThread(function()
 		"che_maincabin_occupied"
 	})
 
+	ActivateInteriorEntitySets(23042, "Armadillo Sheriff", {
+		"arm_sheriff_int_normal_mp"
+	})
+
+
         isLoaded = true
     end
 end)
