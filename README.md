@@ -61,4 +61,5 @@ Imap data was gathered from these 3 sources.
 Brits_interiors - https://forum.cfx.re/t/  brits-ipl-for-a-cleaner-more-expansive-environment/3385879  
 Redm-ImapViewer - https://github.com/robwhitewick/Redm-ImapViewer
     Config data was copied over, Aug 2026
+    See the Git history for changes. Distributed under GNU GPLv3.
 psn_interiors - https://github.com/Hailey-Ross/psn_interiors/tree/main  
