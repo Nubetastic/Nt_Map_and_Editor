@@ -289,12 +289,11 @@ exportButton.addEventListener('click', () => {
 
 closeButton.addEventListener('click', () => postNui('close'));
 window.addEventListener('keydown', (event) => { if (event.key === 'Escape') postNui('close'); });
-window.addEventListener('mousedown', (event) => {
-  if (event.button === 2 && app.classList.contains('visible')) {
-    event.preventDefault();
-    postNui('cameraDragStart').catch(() => {});
-  }
-});
+window.addEventListener('wheel', (event) => {
+  if (!app.classList.contains('visible')) return;
+  event.preventDefault();
+  editorList.scrollTop += event.deltaY;
+}, { passive: false });
 window.addEventListener('contextmenu', (event) => { if (app.classList.contains('visible')) event.preventDefault(); });
 window.addEventListener('resize', () => { if (app.classList.contains('visible')) applyScale(scaleSlider.value); });
 

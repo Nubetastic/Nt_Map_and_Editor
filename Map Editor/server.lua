@@ -1,5 +1,6 @@
 local IMAP_CHANGES_FILE = 'shared/imap_changes.json'
-local IMAP_EXPORT_FILE = 'shared/imapConfig_update.lua'
+local IMAP_CONFIG_FILE = 'shared/imapConfig.lua'
+local IMAP_BACKUP_FILE = 'shared/imapConfig_backup.lua'
 local MAX_RESET_ITEMS = 1000
 
 local resourceName = GetCurrentResourceName()
@@ -136,21 +137,6 @@ local function saveJson(path, value)
     return true
 end
 
-local function readJson(path)
-    local raw = LoadResourceFile(resourceName, path)
-    if not raw or raw == '' then
-        return {}
-    end
-
-    local ok, decoded = pcall(json.decode, raw)
-    if not ok or type(decoded) ~= 'table' then
-        print(('[%s] Could not read %s; using catalog defaults.'):format(resourceName, path))
-        return {}
-    end
-
-    return decoded
-end
-
 for index, imap in ipairs(IMAP_CATALOG or {}) do
     if type(imap.dec_hash) ~= 'number'
         or type(imap.default) ~= 'boolean'
@@ -160,31 +146,6 @@ for index, imap in ipairs(IMAP_CATALOG or {}) do
     end
 
     imapByHash[imap.dec_hash] = imap
-end
-
-local function loadImapChanges()
-    local decoded = readJson(IMAP_CHANGES_FILE)
-    local accepted = 0
-    local rejected = 0
-
-    for hashText, savedState in pairs(decoded) do
-        local hash = tonumber(hashText)
-        local baseline = hash and imapByHash[hash]
-        local state = recordState(savedState)
-        local held = recordHeld(savedState)
-        if baseline and (state or held) then
-            local overrideState = state ~= baselineState(baseline) and state or nil
-            local record = makeChangeRecord(overrideState, held)
-            if record then
-                imapChanges[tostring(hash)] = record
-                accepted = accepted + 1
-            end
-        else
-            rejected = rejected + 1
-        end
-    end
-
-    print(('[%s] Loaded %d iMap changes from %s (%d rejected).'):format(resourceName, accepted, IMAP_CHANGES_FILE, rejected))
 end
 
 local function effectiveImapState(hash)
@@ -199,9 +160,9 @@ local function sendExportResult(playerSource, mode, ok, message)
 end
 
 local function exportImaps(playerSource)
-    local baseline = LoadResourceFile(resourceName, 'shared/imapConfig.lua')
+    local baseline = LoadResourceFile(resourceName, IMAP_CONFIG_FILE)
     if not baseline or baseline == '' then
-        sendExportResult(playerSource, 'imaps', false, 'Could not read shared/imapConfig.lua.')
+        sendExportResult(playerSource, 'imaps', false, ('Could not read %s.'):format(IMAP_CONFIG_FILE))
         return
     end
 
@@ -223,15 +184,22 @@ local function exportImaps(playerSource)
         return
     end
 
-    if not SaveResourceFile(resourceName, IMAP_EXPORT_FILE, merged, -1) then
-        sendExportResult(playerSource, 'imaps', false, ('Failed to write %s.'):format(IMAP_EXPORT_FILE))
+    if not SaveResourceFile(resourceName, IMAP_BACKUP_FILE, baseline, -1) then
+        sendExportResult(playerSource, 'imaps', false, ('Failed to write %s.'):format(IMAP_BACKUP_FILE))
         return
     end
 
-    sendExportResult(playerSource, 'imaps', true, ('Exported %d iMaps to %s.'):format(#IMAP_CATALOG, IMAP_EXPORT_FILE))
+    if not SaveResourceFile(resourceName, IMAP_CONFIG_FILE, merged, -1) then
+        sendExportResult(playerSource, 'imaps', false, ('Backup saved, but failed to write %s.'):format(IMAP_CONFIG_FILE))
+        return
+    end
+
+    sendExportResult(playerSource, 'imaps', true, ('Exported %d iMaps to %s. Restart the resource when ready.'):format(#IMAP_CATALOG, IMAP_CONFIG_FILE))
 end
 
-loadImapChanges()
+if saveJson(IMAP_CHANGES_FILE, {}) then
+    print(('[%s] Cleared %s on resource start.'):format(resourceName, IMAP_CHANGES_FILE))
+end
 
 RegisterNetEvent('nt-imapviewer:requestSettings', function()
     TriggerClientEvent('nt-imapviewer:syncSettings', source, imapChanges)

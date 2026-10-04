@@ -2,9 +2,14 @@ local DEFAULT_RANGE = 10
 local MIN_RANGE = 2
 local MAX_RANGE = 50
 local MOVING_REFRESH_INTERVAL = 1000
-local CAMERA_DRAG_CONTROL = 0xF84FA74F
+local CAMERA_AIM_CONTROL = 0xF84FA74F
+local CAMERA_LOOK_CONTROL = 0x8AAA0AD4
 local CAMERA_LOOK_X = 0xA987235F
 local CAMERA_LOOK_Y = 0xD2047988
+local SCROLL_DOWN_CONTROL = 0xFD0F0C2C
+local SCROLL_UP_CONTROL = 0xCC1075A7
+local SELECT_SCROLL_DOWN_CONTROL = 0xD0842EDF
+local SELECT_SCROLL_UP_CONTROL = 0xF78D7337
 local LOCATION_LINE_HEIGHT = 5.0
 
 local currentRange = DEFAULT_RANGE
@@ -12,7 +17,6 @@ local imapChanges = {}
 local uiOpen = false
 local nuiReady = false
 local cameraDragActive = false
-local cameraDragGrace = 0
 local imapByHash = {}
 local nearbyLineCoords = {}
 
@@ -196,16 +200,6 @@ RegisterNUICallback('ready', function(_, callback)
     callback({ ok = true })
 end)
 
-RegisterNUICallback('cameraDragStart', function(_, callback)
-    if uiOpen and not cameraDragActive then
-        cameraDragActive = true
-        cameraDragGrace = GetGameTimer() + 250
-        SetNuiFocus(false, false)
-        SetNuiFocusKeepInput(true)
-    end
-    callback({ ok = true })
-end)
-
 RegisterNUICallback('setRange', function(data, callback)
     currentRange = clampRange(data and data.range)
     sendCurrent('update')
@@ -319,14 +313,21 @@ CreateThread(function()
     while true do
         if uiOpen then
             DisablePlayerFiring(PlayerId(), true)
-            DisableControlAction(0, CAMERA_DRAG_CONTROL, true)
-            if cameraDragActive then
-                if GetGameTimer() > cameraDragGrace and not IsDisabledControlPressed(0, CAMERA_DRAG_CONTROL) then
-                    cameraDragActive = false
-                    SetNuiFocus(true, true)
-                    SetNuiFocusKeepInput(true)
-                end
-            else
+            DisableControlAction(0, CAMERA_AIM_CONTROL, true)
+            DisableControlAction(0, CAMERA_LOOK_CONTROL, true)
+            DisableControlAction(0, SCROLL_DOWN_CONTROL, true)
+            DisableControlAction(0, SCROLL_UP_CONTROL, true)
+            DisableControlAction(0, SELECT_SCROLL_DOWN_CONTROL, true)
+            DisableControlAction(0, SELECT_SCROLL_UP_CONTROL, true)
+
+            local lookActive = IsDisabledControlPressed(0, CAMERA_LOOK_CONTROL)
+            if lookActive ~= cameraDragActive then
+                cameraDragActive = lookActive
+                SetNuiFocus(not lookActive, not lookActive)
+                SetNuiFocusKeepInput(true)
+            end
+
+            if not cameraDragActive then
                 DisableControlAction(0, CAMERA_LOOK_X, true)
                 DisableControlAction(0, CAMERA_LOOK_Y, true)
             end
